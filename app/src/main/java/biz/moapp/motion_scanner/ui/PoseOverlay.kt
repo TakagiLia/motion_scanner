@@ -1,18 +1,50 @@
 package biz.moapp.motion_scanner.ui
 
 import android.util.Log
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.res.imageResource
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.dp
+import biz.moapp.motion_scanner.R
 import com.google.mlkit.vision.pose.Pose
 import com.google.mlkit.vision.pose.PoseLandmark
 
 @Composable
-fun PoseOverlay(pose: Pose, imageWidth: Int, imageHeight: Int,) {
-    Canvas(modifier = Modifier.fillMaxSize()) {
+fun PoseOverlay(pose: Pose, imageWidth: Int, imageHeight: Int,  cameraViewModel : CameraViewModel) {
+    val animationVisible by cameraViewModel.animationVisible.collectAsState()
+    val imageBitmap = ImageBitmap.imageResource(id = R.drawable.pico)
+    AnimatedVisibility(
+        visible = animationVisible,
+        enter = expandHorizontally(),
+        exit = shrinkHorizontally()
+    ) {
+        Image(
+            modifier = Modifier
+                .size(80.dp)
+                .offset(90f.dp, 60f.dp),
+            painter = painterResource(R.drawable.pico),
+            contentDescription = ""
+        )
+    }
+    Canvas(modifier = Modifier.fillMaxHeight(imageHeight.toFloat()).fillMaxWidth(imageWidth.toFloat())) {
 
         val connections = listOf(
             /**顔**/
@@ -52,30 +84,24 @@ fun PoseOverlay(pose: Pose, imageWidth: Int, imageHeight: Int,) {
 
         val canvasWidth = size.width
         val canvasHeight = size.height
-        Log.d("--size","canvasWidth：${canvasWidth}\n" +
-                "canvasHeight：${canvasHeight}\n" +
-                "imageWidth：${imageWidth}\n" +
-                "imageHeight：${imageHeight}\n" +
-                "WeightRatio: ${canvasWidth / imageWidth}\n" +
-                "HeightRatio: ${canvasHeight / imageHeight}\n" +
-                "NOSE X: ${pose.getPoseLandmark(PoseLandmark.NOSE)?.position3D?.x}\n" +
-                "NOSE Y: ${pose.getPoseLandmark(PoseLandmark.NOSE)?.position3D?.y}\n" +
-                "NOSE Z: ${pose.getPoseLandmark(PoseLandmark.NOSE)?.position3D?.z}\n")
+//        Log.d("--size","canvasWidth：${canvasWidth}\n" +
+//                "canvasHeight：${canvasHeight}\n" +
+//                "imageWidth：${imageWidth}\n" +
+//                "imageHeight：${imageHeight}\n" +
+//                "WeightRatio: ${canvasWidth / imageWidth}\n" +
+//                "HeightRatio: ${canvasHeight / imageHeight}\n" +
+//                "NOSE X: ${pose.getPoseLandmark(PoseLandmark.NOSE)?.position3D?.x}\n" +
+//                "NOSE Y: ${pose.getPoseLandmark(PoseLandmark.NOSE)?.position3D?.y}\n" +
+//                "NOSE Z: ${pose.getPoseLandmark(PoseLandmark.NOSE)?.position3D?.z}\n")
 
         /**ランドマークの描画**/
         pose.allPoseLandmarks.forEach { landmark ->
-            Log.d("--Position ${landmark.landmarkType}","X: ${landmark.position3D.x}\n" +
-                    "Y: ${landmark.position3D.y}\n" +
-                    "Z: ${landmark.position3D.z}")
                 if (landmark.inFrameLikelihood > 0.5f) { // 信頼度が低い場合は描画しない
                     if(landmark.landmarkType == PoseLandmark.LEFT_SHOULDER ||
                         landmark.landmarkType == PoseLandmark.RIGHT_SHOULDER ||
                         landmark.landmarkType == PoseLandmark.LEFT_ELBOW ||
-                        landmark.landmarkType == PoseLandmark.RIGHT_ELBOW ||
-                        landmark.landmarkType == PoseLandmark.LEFT_WRIST ||
-                        landmark.landmarkType == PoseLandmark.RIGHT_WRIST ||
-                        landmark.landmarkType == PoseLandmark.LEFT_HIP ||
-                        landmark.landmarkType == PoseLandmark.RIGHT_HIP){
+                        landmark.landmarkType == PoseLandmark.RIGHT_ELBOW
+                        ) {
                         val x = landmark.position3D.x * canvasWidth / imageWidth
                         val y = landmark.position3D.y * canvasHeight / imageHeight
                         drawCircle(
@@ -85,6 +111,23 @@ fun PoseOverlay(pose: Pose, imageWidth: Int, imageHeight: Int,) {
                         )
                     }
                 }
+            Log.d("--animationVisible","${landmark.landmarkType}: ${landmark.position3D.x}, ${landmark.position3D.y}")
+
+            if((landmark.landmarkType == PoseLandmark.LEFT_SHOULDER ||
+                        landmark.landmarkType == PoseLandmark.RIGHT_SHOULDER ||
+                        landmark.landmarkType == PoseLandmark.LEFT_ELBOW) &&
+                landmark.position3D.x > 500
+                && landmark.position3D.y > 500 ){
+                cameraViewModel.setAnimationVisible(true)
+                Log.d("--animationVisible","yes")
+                drawImage(image = imageBitmap,
+                    dstSize = IntSize(100, 100),
+                    dstOffset = IntOffset(x = 250, y = 350)
+                )
+                cameraViewModel.setAnimationVisible()
+            }else{
+                cameraViewModel.setAnimationVisible()
+            }
         }
 
         /**線の描画**/

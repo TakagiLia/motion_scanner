@@ -4,10 +4,14 @@ package biz.moapp.motion_scanner.ui
 import android.annotation.SuppressLint
 import android.content.ContentValues.TAG
 import android.graphics.ImageFormat
+import android.media.Image
 import android.util.Log
 import android.util.Size
 import android.util.SparseIntArray
 import android.view.Surface
+import android.view.SurfaceView
+import android.view.ViewGroup
+import android.widget.LinearLayout
 import androidx.annotation.OptIn
 import androidx.camera.core.AspectRatio
 import androidx.camera.core.CameraSelector
@@ -20,9 +24,20 @@ import androidx.camera.core.resolutionselector.ResolutionSelector
 import androidx.camera.core.resolutionselector.ResolutionStrategy
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.shrinkHorizontally
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Button
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -31,13 +46,18 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.zIndex
 import androidx.core.content.ContextCompat
 import biz.moapp.motion_scanner.MotionAnalyzeUseCase
+import biz.moapp.motion_scanner.R
 import com.google.android.gms.tasks.Task
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.pose.Pose
@@ -63,16 +83,28 @@ fun CameraPreview(
     var imageHeight = 0
     val density = LocalDensity.current
 
-    BoxWithConstraints {
-        val width = maxWidth
-        val height = maxHeight
-        imageWidth = with(density){ maxWidth.toPx().toInt() }
-        imageHeight = with(density){ maxHeight.toPx().toInt() }
+    var size by remember { mutableStateOf(IntSize.Zero) }
 
-        Box {
+    Box(modifier = Modifier.fillMaxSize()) {
+
+        BoxWithConstraints {
+            val width = maxWidth
+            val height = maxHeight
+            imageWidth = with(density) { maxWidth.toPx().toInt() }
+            imageHeight = with(density) { maxHeight.toPx().toInt() }
+
             AndroidView(
+                modifier = Modifier.onSizeChanged { newSize ->
+                    size = newSize
+                },
                 factory = { ctx ->
                     PreviewView(ctx).apply {
+                        layoutParams = LinearLayout.LayoutParams(
+                            ViewGroup.LayoutParams.MATCH_PARENT,
+                            ViewGroup.LayoutParams.WRAP_CONTENT,
+                        )
+                        implementationMode = PreviewView.ImplementationMode.COMPATIBLE
+                        scaleType = PreviewView.ScaleType.FILL_CENTER
 
                         cameraProviderFuture.addListener({
                             val cameraProvider = cameraProviderFuture.get()
@@ -87,8 +119,10 @@ fun CameraPreview(
                             /**撮影のユースケースを作成**/
                             imageCapture = ImageCapture.Builder().build()
                             /**解析のユースケース**/
+                            Log.d("--sample1", "width:${size.width}, height:${size.height}")
+                            Log.d("--sample2", "width:${imageWidth}, height:${imageHeight}")
                             val imageAnalyzer = ImageAnalysis.Builder()
-                                .setTargetResolution(Size(PreviewView(ctx).width, PreviewView(ctx).height))
+                                .setTargetResolution(Size(size.width, size.height))
                                 .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_YUV_420_888)
                                 .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                                 .build()
@@ -101,7 +135,12 @@ fun CameraPreview(
                                      * rotationDegrees：カメラセンサーの向きに基づいた回転角度（値は変わらない？？）
                                      *  回転角度を変更したい場合はandroid.graphics.Matrixを利用する
                                      * **/
-                                    imageProxy.width
+
+//                                    Log.d("--img imageProxy", "width: ${imageProxy.width}")
+//                                    Log.d("--img imageProxy", "height: ${imageProxy.height}")
+//
+//                                    Log.d("--img", "width: ${imageProxy.image?.width}")
+//                                    Log.d("--img", "height: ${imageProxy.image?.height}")
                                     val rotationDegrees = imageProxy.imageInfo.rotationDegrees
 
                                     MotionAnalyzeUseCase(cameraViewModel).analyze(imageProxy)
@@ -114,7 +153,10 @@ fun CameraPreview(
                                 cameraProvider.unbindAll()
                                 /**プレビュー、撮影ユースケースをカメラにバインドする**/
                                 cameraProvider.bindToLifecycle(
-                                    lifecycleOwner, cameraSelector, preview, imageCapture, imageAnalyzer
+                                    lifecycleOwner,
+                                    cameraSelector,
+                                    preview, /*imageCapture,*/
+                                    imageAnalyzer
                                 )
 
                             } catch (exc: Exception) {
@@ -124,10 +166,11 @@ fun CameraPreview(
 
 
                     }
-                }
-            )
-            pose?.let { PoseOverlay(it, imageWidth,imageHeight ) }
-        }
+                },
+            ) {
 
+            }
+            pose?.let { PoseOverlay(it, imageWidth, imageHeight, cameraViewModel) }
+        }
     }
 }

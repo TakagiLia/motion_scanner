@@ -14,4 +14,11 @@ class CameraViewModel: ViewModel() {
     fun setPose(pose :Pose?){
         _pose.value = pose
     }
+
+    private val _animationVisible = MutableStateFlow(false) // 初期値は true
+    val animationVisible: StateFlow<Boolean> = _animationVisible.asStateFlow()
+    fun setAnimationVisible(flag: Boolean = false){
+        _animationVisible.value = flag
+    }
+
 }

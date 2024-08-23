@@ -3,6 +3,8 @@ package biz.moapp.motion_scanner.ui
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.Button
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -21,12 +23,13 @@ fun SampleCanvas(modifier :Modifier){
                 Pair(Offset(734.9671F, 550.7924F), Offset(1073.8956F, 654.9725F),),
                 Pair(Offset(391.27032F, 583.2485F), Offset(218.27956F, 1015.70435F),),
 
-
                 )
             val pose = listOf(
                 Offset(0F, 0F),
                 Offset(734.9671F, 550.7924F),
                 Offset(391.27032F, 583.2485F),
+//                Offset(350.27032F, 520.2485F),
+                Offset(250.26198F, 350.4531F),
                 Offset(1073.8956F, 654.9725F),
                 Offset(218.27956F, 1015.70435F),
                 Offset(903.83704F, 754.676F),

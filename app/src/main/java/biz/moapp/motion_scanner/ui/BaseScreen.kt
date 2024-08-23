@@ -21,6 +21,7 @@ fun BaseScreen(){
     val navController = rememberNavController()
     
     Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+//        SampleCanvas(modifier = Modifier.padding(innerPadding))
             NavHost(
                 navController = navController, startDestination = Nav.MainScreen.name,
                 enterTransition = {
