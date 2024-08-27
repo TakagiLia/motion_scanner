@@ -107,8 +107,8 @@ fun CameraPreview(
                                     MotionAnalyzeUseCase(cameraViewModel).analyze(imageProxy)
                                 })
 
-                            /**背面のカメラを選択**/
-                            val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+                            /**前面のカメラを選択**/
+                            val cameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA
                             try {
                                 /**バインドされているユースケースがあれば、すべて解除する**/
                                 cameraProvider.unbindAll()
