@@ -1,17 +1,36 @@
 package biz.moapp.motion_scanner.ui
 
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import com.google.mlkit.vision.pose.Pose
 import com.google.mlkit.vision.pose.PoseLandmark
 
 @Composable
 fun PoseOverlay(pose: Pose, imageWidth: Int, imageHeight: Int,) {
+
+    val context = LocalContext.current
+    var state by remember { mutableStateOf(false) }
+
+    if (state) {
+        LaunchedEffect(Unit) {
+            Log.d("--check Toast","Toast showed")
+            Toast.makeText(context, "Touch! ", Toast.LENGTH_SHORT).show()
+            state = false
+        }
+    }
+
     Canvas(modifier = Modifier.fillMaxSize()) {
 
         val connections = listOf(
@@ -48,8 +67,13 @@ fun PoseOverlay(pose: Pose, imageWidth: Int, imageHeight: Int,) {
         poseList.forEach { landmark ->
             landmark?.let {
                 if (landmark.inFrameLikelihood > 0.5f) { // 信頼度が低い場合は描画しない
-                    val x = landmark.position3D.x * canvasWidth / imageWidth
-                    val y = landmark.position3D.y * canvasHeight / imageHeight
+                    val x = landmark.position.x * canvasWidth / imageWidth
+                    val y = landmark.position.y * canvasHeight / imageHeight
+                    if(landmark.landmarkType == PoseLandmark.LEFT_WRIST){
+                     if(landmark.landmarkType == PoseLandmark.LEFT_WRIST && y >500){
+                         state = true
+                    }
+                    Log.d("--check state"," state:${state}")
                     drawCircle(
                         color = Color.Red,
                         radius = 8f,
@@ -67,10 +91,10 @@ fun PoseOverlay(pose: Pose, imageWidth: Int, imageHeight: Int,) {
             if(startLandmark != null && endLandmark != null){
                 drawLine(
                     color = Color.Red,
-                    start = Offset(startLandmark.position3D.x * (canvasWidth / imageWidth),
-                        startLandmark.position3D.y * (canvasHeight / imageHeight)),
-                    end = Offset(endLandmark.position3D.x * (canvasWidth / imageWidth),
-                        endLandmark.position3D.y * (canvasHeight / imageHeight)),
+                    start = Offset(startLandmark.position.x * (canvasWidth / imageWidth),
+                        startLandmark.position.y * (canvasHeight / imageHeight)),
+                    end = Offset(endLandmark.position.x * (canvasWidth / imageWidth),
+                        endLandmark.position.y * (canvasHeight / imageHeight)),
                     strokeWidth = 4f
                 )
             }
