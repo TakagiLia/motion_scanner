@@ -15,21 +15,7 @@ fun PoseOverlay(pose: Pose, imageWidth: Int, imageHeight: Int,) {
     Canvas(modifier = Modifier.fillMaxSize()) {
 
         val connections = listOf(
-            /**顔**/
-//            Pair(PoseLandmark.LEFT_EYE_INNER, PoseLandmark.LEFT_EYE),
-//            Pair(PoseLandmark.LEFT_EYE, PoseLandmark.LEFT_EYE_OUTER),
-//            Pair(PoseLandmark.LEFT_EYE_OUTER, PoseLandmark.LEFT_EAR),
-//            Pair(PoseLandmark.LEFT_EAR, PoseLandmark.LEFT_MOUTH),
-//            Pair(PoseLandmark.LEFT_MOUTH, PoseLandmark.NOSE),
-//            Pair(PoseLandmark.NOSE, PoseLandmark.RIGHT_MOUTH),
-//            Pair(PoseLandmark.RIGHT_MOUTH, PoseLandmark.RIGHT_EAR),
-//            Pair(PoseLandmark.RIGHT_EAR, PoseLandmark.RIGHT_EYE_OUTER),
-//            Pair(PoseLandmark.RIGHT_EYE_OUTER, PoseLandmark.RIGHT_EYE),
-//            Pair(PoseLandmark.RIGHT_EYE, PoseLandmark.RIGHT_EYE_INNER),
-
             /**体幹**/
-//            Pair(PoseLandmark.NOSE, PoseLandmark.LEFT_SHOULDER),
-//            Pair(PoseLandmark.NOSE, PoseLandmark.RIGHT_SHOULDER),
             Pair(PoseLandmark.LEFT_SHOULDER, PoseLandmark.RIGHT_SHOULDER),
             Pair(PoseLandmark.LEFT_SHOULDER, PoseLandmark.LEFT_HIP),
             Pair(PoseLandmark.RIGHT_SHOULDER, PoseLandmark.RIGHT_HIP),
@@ -41,50 +27,36 @@ fun PoseOverlay(pose: Pose, imageWidth: Int, imageHeight: Int,) {
             /**腕（右側）**/
             Pair(PoseLandmark.RIGHT_SHOULDER, PoseLandmark.RIGHT_ELBOW),
             Pair(PoseLandmark.RIGHT_ELBOW, PoseLandmark.RIGHT_WRIST),
+        )
 
-            /**脚（左側）**/
-//            Pair(PoseLandmark.LEFT_HIP, PoseLandmark.LEFT_KNEE),
-//            Pair(PoseLandmark.LEFT_KNEE, PoseLandmark.LEFT_ANKLE),
-            /**脚（右側）**/
-//            Pair(PoseLandmark.RIGHT_HIP, PoseLandmark.RIGHT_KNEE),
-//            Pair(PoseLandmark.RIGHT_KNEE, PoseLandmark.RIGHT_ANKLE)
+        /**必要なランドマークだけ保持**/
+        val poseList = listOf(
+            pose.getPoseLandmark(PoseLandmark.LEFT_SHOULDER),
+            pose.getPoseLandmark(PoseLandmark.RIGHT_SHOULDER),
+            pose.getPoseLandmark(PoseLandmark.LEFT_ELBOW),
+            pose.getPoseLandmark(PoseLandmark.RIGHT_ELBOW),
+            pose.getPoseLandmark(PoseLandmark.LEFT_WRIST),
+            pose.getPoseLandmark(PoseLandmark.RIGHT_WRIST),
+            pose.getPoseLandmark(PoseLandmark.LEFT_HIP),
+            pose.getPoseLandmark(PoseLandmark.RIGHT_HIP),
         )
 
         val canvasWidth = size.width
         val canvasHeight = size.height
-        Log.d("--size","canvasWidth：${canvasWidth}\n" +
-                "canvasHeight：${canvasHeight}\n" +
-                "imageWidth：${imageWidth}\n" +
-                "imageHeight：${imageHeight}\n" +
-                "WeightRatio: ${canvasWidth / imageWidth}\n" +
-                "HeightRatio: ${canvasHeight / imageHeight}\n" +
-                "NOSE X: ${pose.getPoseLandmark(PoseLandmark.NOSE)?.position3D?.x}\n" +
-                "NOSE Y: ${pose.getPoseLandmark(PoseLandmark.NOSE)?.position3D?.y}\n" +
-                "NOSE Z: ${pose.getPoseLandmark(PoseLandmark.NOSE)?.position3D?.z}\n")
 
         /**ランドマークの描画**/
-        pose.allPoseLandmarks.forEach { landmark ->
-            Log.d("--Position ${landmark.landmarkType}","X: ${landmark.position3D.x}\n" +
-                    "Y: ${landmark.position3D.y}\n" +
-                    "Z: ${landmark.position3D.z}")
+        poseList.forEach { landmark ->
+            landmark?.let {
                 if (landmark.inFrameLikelihood > 0.5f) { // 信頼度が低い場合は描画しない
-                    if(landmark.landmarkType == PoseLandmark.LEFT_SHOULDER ||
-                        landmark.landmarkType == PoseLandmark.RIGHT_SHOULDER ||
-                        landmark.landmarkType == PoseLandmark.LEFT_ELBOW ||
-                        landmark.landmarkType == PoseLandmark.RIGHT_ELBOW ||
-                        landmark.landmarkType == PoseLandmark.LEFT_WRIST ||
-                        landmark.landmarkType == PoseLandmark.RIGHT_WRIST ||
-                        landmark.landmarkType == PoseLandmark.LEFT_HIP ||
-                        landmark.landmarkType == PoseLandmark.RIGHT_HIP){
-                        val x = landmark.position3D.x * canvasWidth / imageWidth
-                        val y = landmark.position3D.y * canvasHeight / imageHeight
-                        drawCircle(
-                            color = Color.Red,
-                            radius = 8f,
-                            center = Offset(x, y)
-                        )
-                    }
+                    val x = landmark.position3D.x * canvasWidth / imageWidth
+                    val y = landmark.position3D.y * canvasHeight / imageHeight
+                    drawCircle(
+                        color = Color.Red,
+                        radius = 8f,
+                        center = Offset(x, y)
+                    )
                 }
+            }
         }
 
         /**線の描画**/
